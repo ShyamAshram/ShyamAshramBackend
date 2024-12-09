@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    const uri = process.env.MONGODB_URI || "mongodb+srv://Juan:<db_password>@yapp.ura5p.mongodb.net/?retryWrites=true&w=majority&appName=YAPP/Yapp";
+    const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/test";
     await mongoose.connect(uri, {
      
     });
