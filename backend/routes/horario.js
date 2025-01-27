@@ -58,12 +58,17 @@ router.post('/registerClass', authenticateToken, async (req, res) => {
     const closestDate = new Date(today.setDate(today.getDate() + daysToAdd));
 
     // Verificar si ya existe una inscripción para el mismo usuario, clase y fecha
+   // Verificar si ya existe una inscripción para el mismo usuario, clase y fecha
     const existingRegistration = await Attendance.findOne({
-      id,
       userId,
       classId,
       date: closestDate
     });
+
+    if (existingRegistration) {
+      return res.status(400).json({ error: 'Ya estás inscrito en esta clase para la fecha seleccionada' });
+    }
+
 
     if (existingRegistration) {
       return res.status(400).json({ error: 'Ya estás inscrito en esta clase para la fecha seleccionada' });

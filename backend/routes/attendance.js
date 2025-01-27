@@ -74,36 +74,27 @@ router.get('/:userId', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
-router.get('/all-registrations', async (req, res) => {
+router.get('/all-registrations', authenticateToken, async (req, res) => {
   try {
-    // Agrupamos por userId y date para obtener solo un registro por combinación
-    const registrations = await Attendance.aggregate([
-      {
-        $group: {
-          _id: { userId: "$userId", date: "$date" }, // Agrupa por usuario y fecha
-          attendanceId: { $first: "$_id" }, // Obtiene el primer _id de la agrupación
-          userId: { $first: "$userId" },
-          date: { $first: "$date" },
-          attended: { $first: "$attended" }
-        }
-      }
-    ]);
-
-    // Popula el nombre y email del usuario después de agrupar
-    const populatedRegistrations = await Attendance.populate(registrations, {
-      path: "_id.userId",
-      select: "name email"
-    });
-
-    if (!populatedRegistrations || populatedRegistrations.length === 0) {
+    const registrations = await Attendance.find().populate('userId', 'name email');
+    if (!registrations.length) {
       return res.status(404).json({ message: 'No hay inscripciones registradas.' });
     }
-
-    res.json(populatedRegistrations);
+    res.json(registrations);
   } catch (err) {
     console.error('Error al obtener las inscripciones:', err);
-    res.status(500).json({ error: 'Error del servidor al obtener inscripciones', details: err.message });
+    res.status(500).json({ error: 'Error del servidor al obtener inscripciones.' });
   }
 });
+router.delete('/clear-registrations', authenticateToken, isProfesor, async (req, res) => {
+  try {
+    await Attendance.deleteMany({});
+    res.status(200).json({ message: 'Todas las inscripciones han sido eliminadas.' });
+  } catch (error) {
+    console.error('Error al eliminar inscripciones:', error);
+    res.status(500).json({ error: 'Error del servidor al eliminar inscripciones.' });
+  }
+});
+
 
 module.exports = router;

@@ -13,10 +13,7 @@ router.post('/save-attendance', async (req, res) => {
     }
   
     try {
-      // Verificar que el instructor existe
-    
-  
-      // Crear un nuevo registro de asistencia
+     
       const newList = new List({
         students: attendedStudents.map((student) => ({
           userId: student._id,
