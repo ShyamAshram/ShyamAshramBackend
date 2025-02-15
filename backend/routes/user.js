@@ -9,8 +9,14 @@ const { createNotification } = require('../controller/notificationcontroller');
 const { now } = require('mongoose');
 const Attendance = require('../models/attendance')
 const isProfesor = require('../middleware/profesores');
+const nodemailer = require('nodemailer');
 
 require('dotenv').config();
+if (!process.env.JWT_SECRET_KEY) {
+  throw new Error('JWT_SECRET_KEY no está definido en las variables de entorno');
+}
+
+const token = jwt.sign({ id: User._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
 router.post('/register', async (req, res) => {
   try {
@@ -190,9 +196,72 @@ router.get('/date/', authenticateToken, async (req, res) => {
   }
   
 });
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+  },
+});
 
+// Función para enviar correo electrónico
+const sendPasswordResetEmail = async (email, resetLink) => {
+  const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Recuperación de Contraseña',
+      html: `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p><a href="${resetLink}">${resetLink}</a>`,
+  };
 
+  await transporter.sendMail(mailOptions);
+};
 
+// Ruta para recuperar contraseña
+router.post('/recover-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+      // Buscar al usuario por su correo electrónico
+      const user = await User.findOne({ email });
+      if (!user) {
+          return res.status(404).json({ error: 'El correo no está registrado' });
+      }
+
+      // Verificar que JWT_SECRET esté definido
+      if (!process.env.JWT_SECRET_KEY) {
+          throw new Error('JWT_SECRET no está definido en las variables de entorno');
+      }
+
+      // Generar un token JWT
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+
+      // Crear el enlace de recuperación
+      const resetLink = `http://192.168.128.15:3001/reset-password?token=${token}`;
+
+      // Enviar el correo electrónico
+      await sendPasswordResetEmail(email, resetLink);
+
+      res.json({ message: 'Correo enviado' });
+  } catch (error) {
+      console.error('Error en la recuperación de contraseña:', error);
+      res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/reset-password', (req, res) => {
+  const token = req.query.token;
+
+  try {
+    // Verificar el token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    // Renderizar la página de restablecimiento de contraseña
+    res.render('reset-password', { token });
+  } catch (error) {
+    console.error('Error al verificar el token:', error);
+    res.status(400).json({ error: 'Token inválido o expirado' });
+  }
+});
 
 module.exports = router;
 

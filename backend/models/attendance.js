@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-
-// Definir el esquema para las inscripciones (attendance)
 const attendanceSchema = new mongoose.Schema({
   classId: {
     type: mongoose.Schema.Types.ObjectId,
