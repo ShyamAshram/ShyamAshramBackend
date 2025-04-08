@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const List = require('../models/list');
-const jwt = require('jsonwebtoken'); // Necesario para manejar el token
-const User = require('../models/user'); // Para obtener los datos del instructor
+const jwt = require('jsonwebtoken'); 
+const User = require('../models/user'); 
+const mongoose = require('mongoose');
 
-// Ruta para guardar lista de asistencia
+
+
 router.post('/save-attendance', async (req, res) => {
   const { attendedStudents, instructorId } = req.body;
 
