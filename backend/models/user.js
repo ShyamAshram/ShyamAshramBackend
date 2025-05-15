@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowecase:true },
   password: { type: String, required: true },
   role: { type: String, default: 'user', enum: ['user', 'admin', 'profe'] },
-  plan: { type: String, default: 'No tienes un plan', enum:['Ilimitado', '4 clases', '1 clase', 'Anualidad', 'No tienes un plan'] },
+  plan: { type: String, default: 'No tienes un plan', enum:['Ilimitado', '4 clases', '6 meses', '3 meses', '1 clase', 'Anualidad', 'No tienes un plan'] },
   planDuration: { type: Number, default: 0 },
   planStartDate: { type: Date, default: Date.now },
   attendance: { type: [attendanceSchema], default: [] },
