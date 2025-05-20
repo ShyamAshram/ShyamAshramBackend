@@ -13,24 +13,44 @@ router.post('/save-attendance', async (req, res) => {
   }
 
   try {
-    // Solo imprime los datos que llegan
+    // 📥 Ver datos entrantes
     console.log('📝 Lista recibida:', attendedStudents);
     console.log('👨‍🏫 Instructor ID:', instructorId);
 
-    // Puedes opcionalmente formatearlos si quieres verificar los ObjectId
-    const studentsFormatted = attendedStudents.map((student) => ({
-      userId: student._id,
-      userName: student.userName,
-      userEmail: student.userEmail,
-    }));
+    // ✅ Formatear estudiantes para guardar en el modelo
+    const studentsFormatted = attendedStudents.map((student) => {
+      if (!mongoose.Types.ObjectId.isValid(student._id)) {
+        throw new Error(`ID inválido: ${student._id}`);
+      }
 
-    console.log('✅ Formato para guardar:', studentsFormatted);
+      return {
+        userId: new mongoose.Types.ObjectId(student._id),
+        userName: student.userName,
+        userEmail: student.userEmail,
+      };
+    });
 
-    // Respuesta de prueba sin guardar en DB
-    res.status(200).json({ message: 'Datos recibidos correctamente.', students: studentsFormatted });
+    // 🧾 Crear nueva lista de asistencia
+    const newList = new List({
+      students: studentsFormatted,
+      instructorId: instructorId // Solo si lo tienes definido en el modelo
+    });
+
+    // 💾 Guardar en la base de datos
+    await newList.save();
+
+    // ✅ Respuesta exitosa
+    res.status(201).json({
+      message: 'Lista de asistencia guardada exitosamente.',
+      attendance: newList
+    });
+
   } catch (error) {
-    console.error('Error al procesar la asistencia en Debug:', error);
-    res.status(500).json({ message: 'Hubo un problema procesando la asistencia.', error: error.message });
+    console.error('❌ Error al guardar la asistencia:', error);
+    res.status(500).json({
+      message: 'Hubo un problema al guardar la asistencia.',
+      error: error.message
+    });
   }
 });
 
