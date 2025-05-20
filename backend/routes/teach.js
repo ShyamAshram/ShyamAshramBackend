@@ -9,31 +9,31 @@ router.post('/save-attendance', async (req, res) => {
   const { attendedStudents, instructorId } = req.body;
 
   if (!attendedStudents || attendedStudents.length === 0) {
-      return res.status(400).json({ message: 'No se proporcionaron estudiantes.' });
+    return res.status(400).json({ message: 'No se proporcionaron estudiantes.' });
   }
 
   try {
-      // ✅ Verifica y convierte `_id` a ObjectId
-      const studentsFormatted = attendedStudents.map((student) => {
-          if (!mongoose.Types.ObjectId.isValid(student._id)) {
-              throw new Error(`ID inválido: ${student._id}`);
-          }
-          return {
-              userId: new mongoose.Types.ObjectId(student._id),
-              userName: student.userName,
-              userEmail: student.userEmail,
-          };
-      });
+    // Solo imprime los datos que llegan
+    console.log('📝 Lista recibida:', attendedStudents);
+    console.log('👨‍🏫 Instructor ID:', instructorId);
 
-      const newList = new List({ students: studentsFormatted });
-      await newList.save();
+    // Puedes opcionalmente formatearlos si quieres verificar los ObjectId
+    const studentsFormatted = attendedStudents.map((student) => ({
+      userId: student._id,
+      userName: student.userName,
+      userEmail: student.userEmail,
+    }));
 
-      res.status(201).json({ message: 'Lista de asistencia guardada exitosamente.', attendance: newList });
+    console.log('✅ Formato para guardar:', studentsFormatted);
+
+    // Respuesta de prueba sin guardar en DB
+    res.status(200).json({ message: 'Datos recibidos correctamente.', students: studentsFormatted });
   } catch (error) {
-      console.error('Error al guardar la asistencia:', error);
-      res.status(500).json({ message: 'Hubo un problema al guardar la asistencia.', error: error.message });
+    console.error('Error al procesar la asistencia en Debug:', error);
+    res.status(500).json({ message: 'Hubo un problema procesando la asistencia.', error: error.message });
   }
 });
+
   router.get('/attendance-lists', async (req, res) => {
     try {
         const lists = await List.aggregate([
