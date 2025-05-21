@@ -74,27 +74,35 @@ router.get('/:userId', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
 router.get('/all-registrations', authenticateToken, async (req, res) => {
   try {
-    const registrations = await Attendance.find().populate('userId', 'name email');
+    const registrations = await Attendance.find({ attended: false }) 
+      .populate('userId', 'name email');
+
     if (!registrations.length) {
-      return res.status(404).json({ message: 'No hay inscripciones registradas.' });
+      return res.status(404).json({ message: 'No hay inscripciones registradas pendientes.' });
     }
+
     res.json(registrations);
   } catch (err) {
     console.error('Error al obtener las inscripciones:', err);
     res.status(500).json({ error: 'Error del servidor al obtener inscripciones.' });
   }
 });
+
+
 router.delete('/clear-registrations', authenticateToken, isProfesor, async (req, res) => {
   try {
-    await Attendance.deleteMany({});
-    res.status(200).json({ message: 'Todas las inscripciones han sido eliminadas.' });
+    const result = await Attendance.deleteMany({ attended: false });
+    console.log(`Documentos eliminados: ${result.deletedCount}`);
+    res.status(200).json({ message: `Se eliminaron ${result.deletedCount} inscripciones.` });
   } catch (error) {
     console.error('Error al eliminar inscripciones:', error);
     res.status(500).json({ error: 'Error del servidor al eliminar inscripciones.' });
   }
 });
+
 
 
 module.exports = router;
