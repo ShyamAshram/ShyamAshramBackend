@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const List = require('../models/list');
 const jwt = require('jsonwebtoken'); // Necesario para manejar el token
 const User = require('../models/user'); // Para obtener los datos del instructor
