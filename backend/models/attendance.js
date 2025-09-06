@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const attendanceSchema = new mongoose.Schema({
   classId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -11,23 +12,28 @@ const attendanceSchema = new mongoose.Schema({
     required: true,
   },
   dayOfWeek: {
-    type: String, // Cambiar de ObjectId a String
+    type: String,
     required: true,
   },
-  instructorName: {
-    type: String, // El nombre del instructor es un string
+  instructorId: {   // 👈 NUEVO: referencia al profesor
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  instructorName: { // puedes mantenerlo como copia rápida
+    type: String,
     required: true,
   },
   date: {
-    type: Date, // La fecha calculada para la clase
+    type: Date,
     required: true,
   },
   userName: {
-    type: String, // El nombre del usuario inscrito
+    type: String,
     required: true,
   },
   userEmail: {
-    type: String, // El correo del usuario inscrito
+    type: String,
     required: true,
   },
   attended: {
