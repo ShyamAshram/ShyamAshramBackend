@@ -117,7 +117,7 @@ router.get('/search', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, isAdmin, async (req, res) => {
+router.put('/:id', authenticateToken, isAdmin, isProfesor,  async (req, res) => {
   try {
     const { plan, planDuration } = req.body;
     const user = await User.findByIdAndUpdate(
