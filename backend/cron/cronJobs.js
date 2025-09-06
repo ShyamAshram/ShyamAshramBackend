@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const User = require('./../models/user'); 
 const sendEmail = require('./../utils/sendEmail');
-const sendWhatsApp = require('./../utils/sendWhatsApp'); 
+//const sendWhatsApp = require('./../utils/sendWhatsApp'); 
 const sendPushNotification = require('./../utils/sendPushNotification'); 
 
 
