@@ -5,7 +5,7 @@ const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (token == null) return res.sendStatus(401);
+  if (!token) return res.sendStatus(401);
 
   jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
     if (err) return res.sendStatus(403);
@@ -20,24 +20,24 @@ const isAdmin = (req, res, next) => {
   }
   next();
 };
+
 const isProfesor = (req, res, next) => {
-  try {
-    const token = req.header('Authorization').replace('Bearer ', '');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    
-    if (decoded.role !== 'profe') {
-      return res.status(403).json({ error: 'Acceso denegado: no eres profesor.' });
-    }
-    
-    req.user = decoded; // Guardar los datos decodificados del usuario en la petición
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Autenticación fallida.' });
+  if (req.user.role !== 'profe') {
+    return res.status(403).json({ error: 'Acceso denegado: no eres profesor.' });
   }
+  next();
+};
+
+const isAdminOrProfesor = (req, res, next) => {
+  if (req.user.role === 'admin' || req.user.role === 'profe') {
+    return next();
+  }
+  return res.status(403).json({ error: 'No tienes permisos' });
 };
 
 module.exports = {
   authenticateToken,
   isAdmin,
-  isProfesor
+  isProfesor,
+  isAdminOrProfesor
 };

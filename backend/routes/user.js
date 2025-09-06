@@ -3,12 +3,11 @@ const router = express.Router();
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { authenticateToken, isAdmin } = require('../middleware/admin');
+const { authenticateToken, isAdmin, isAdminOrProfesor, isProfesor } = require('../middleware/admin');
 const Notification = require('../models/notification');
 const { createNotification } = require('../controller/notificationcontroller');
 const { now } = require('mongoose');
 const Attendance = require('../models/attendance')
-const isProfesor = require('../middleware/profesores');
 const nodemailer = require('nodemailer');
 
 require('dotenv').config();
@@ -117,7 +116,7 @@ router.get('/search', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, isAdmin, isProfesor,  async (req, res) => {
+router.put('/:id', authenticateToken, isAdminOrProfesor,  async (req, res) => {
   try {
     const { plan, planDuration } = req.body;
     const user = await User.findByIdAndUpdate(
