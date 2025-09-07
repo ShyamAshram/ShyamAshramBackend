@@ -138,7 +138,7 @@ router.post('/registerStudent', authenticateToken, async (req, res) => {
       classId,
       userId:studentId,
       dayOfWeek: classInfo.dayOfWeek,
-      instructorName: classInfo.instructor,
+      instructorId: classInfo.instructorId,
       date: closestDate,
       userName: student.name,
       userEmail: student.email

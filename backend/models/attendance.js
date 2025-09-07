@@ -15,7 +15,7 @@ const attendanceSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  instructorId: {   // 👈 NUEVO: referencia al profesor
+  instructorId: {  
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
