@@ -140,8 +140,6 @@ router.post('/registerStudent', authenticateToken, async (req, res) => {
       dayOfWeek: classInfo.dayOfWeek,
       instructorName: classInfo.instructor,
       date: closestDate,
-      userName: userInfo.name,
-      userEmail: userInfo.email
     });
 
     await attendance.save();
