@@ -134,14 +134,14 @@ router.post('/registerStudent', authenticateToken, async (req, res) => {
     }
 
     // Crear la inscripción
-    const attendance = new Attendance({
+     const attendance = new Attendance({
       classId,
-      userId: studentId,
+      userId,
       dayOfWeek: classInfo.dayOfWeek,
-      instructorId: classInfo.instructorId, // tomado de la clase
+      instructorName: classInfo.instructor,
       date: closestDate,
-      userName: student.name,
-      userEmail: student.email,
+      userName: userInfo.name,
+      userEmail: userInfo.email
     });
 
     await attendance.save();
