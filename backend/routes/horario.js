@@ -104,13 +104,16 @@ router.post('/registerStudent', authenticateToken, async (req, res) => {
 
     const classInfo = await ClassSchedule.findById(classId);
     if (!classInfo) {
+      console.log("❌ Clase no encontrada con ID:", classId);
       return res.status(404).json({ error: 'Clase no encontrada' });
     }
 
     const student = await User.findById(studentId);
     if (!student) {
+      console.log("❌ Estudiante no encontrado con ID:", studentId);
       return res.status(404).json({ error: 'Estudiante no encontrado' });
     }
+
     if (!student.plan || student.planDuration <= 0) {
       return res.status(400).json({ error: 'El estudiante no tiene un plan activo' });
     }
