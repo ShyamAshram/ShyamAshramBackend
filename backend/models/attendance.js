@@ -20,9 +20,9 @@ const attendanceSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  instructorName: { // puedes mantenerlo como copia rápida
+  instructorName: {
     type: String,
-    required: true,
+    required: false,
   },
   date: {
     type: Date,

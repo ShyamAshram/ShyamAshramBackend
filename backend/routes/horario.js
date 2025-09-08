@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const ClassSchedule = require('./../models/horario'); // Modelo de clases
-const Attendance = require('./../models/attendance'); // Modelo de inscripciones
+const ClassSchedule = require('./../models/horario');
+const Attendance = require('./../models/attendance'); 
 const User = require('../models/user');
 const { authenticateToken } = require('../middleware/admin');
 const isProfesor = require('../middleware/profesores');
@@ -197,6 +197,57 @@ router.put('/confirm-attendance/:attendanceId', authenticateToken, isProfesor, a
     res.status(500).json({ error: 'Error del servidor al confirmar asistencia' });
   }
 });
+
+router.get("/class-schedules", async (req, res) => {
+  try {
+    const schedules = await ClassSchedule.find()
+      // .populate("instructorId", "name email");
+    res.json(schedules);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener horarios" });
+  }
+});
+router.post("/assign-class", async (req, res) => {
+  try {
+    const { classId, teacherId } = req.body;
+
+    if (!classId || !teacherId) {
+      return res.status(400).json({ error: "Faltan parámetros" });
+    }
+
+    const updated = await ClassSchedule.findByIdAndUpdate(
+      classId,
+      { instructorId: teacherId },
+      { new: true }
+    ).populate("instructorId", "name email");
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error asignando clase:", error);
+    res.status(500).json({ error: "Error al asignar clase" });
+  }
+});
+router.post("/unassign-class", async (req, res) => {
+  try {
+    const { classId } = req.body;
+
+    if (!classId) {
+      return res.status(400).json({ error: "Falta classId" });
+    }
+
+    const updated = await ClassSchedule.findByIdAndUpdate(
+      classId,
+      { $unset: { instructorId: "" } }, // elimina el campo
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error desasignando clase:", error);
+    res.status(500).json({ error: "Error al desasignar clase" });
+  }
+});
+
 
 
 module.exports = router;
