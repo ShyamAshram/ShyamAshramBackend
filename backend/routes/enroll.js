@@ -1,24 +1,32 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateToken, isAdmin, isProfesor } = require('../middleware/admin');
 const Attendance = require('../models/attendance');
 const User = require('../models/user');
 const WeeklyAttendance = require('../models/enroll')
 
-router.get('/all-registrations', async (req, res) => {
-    try {
-    
-      const registrations = await Attendance.find().populate('userId', 'name email');
-  
-      if (!registrations || registrations.length === 0) {
-        return res.status(404).json({ message: 'No hay inscripciones registradas.' });
-      }
-  
-      res.json(registrations);
-    } catch (err) {
-      console.error('Error al obtener las inscripciones:', err);
-      res.status(500).json({ error: 'Error del servidor al obtener inscripciones', details: err.message });
+router.get('/all-registrations', authenticateToken, async (req, res) => {
+  try {
+    const instructorId = req.user.id;  
+
+    const registrations = await Attendance.find({ 
+        attended: false, 
+        instructorId: instructorId 
+      })
+      .populate('userId', 'name email')
+      .populate('classId', 'name dayOfWeek');
+
+    if (!registrations.length) {
+      return res.status(404).json({ message: 'No hay inscripciones registradas pendientes para este profesor.' });
     }
-  });
+
+    res.json(registrations);
+  } catch (err) {
+    console.error('Error al obtener las inscripciones:', err);
+    res.status(500).json({ error: 'Error del servidor al obtener inscripciones.' });
+  }
+});
+
   // Backend: Actualizar asistencia
 router.put('/update-attendance/:studentId', (req, res) => {
     const { studentId } = req.params;

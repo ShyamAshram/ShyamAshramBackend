@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const ClassSchedule = require('./../models/horario'); // Modelo de clases
-const Attendance = require('./../models/attendance'); // Modelo de inscripciones
+const ClassSchedule = require('./../models/horario');
+const Attendance = require('./../models/attendance'); 
 const User = require('../models/user');
 const { authenticateToken } = require('../middleware/admin');
 const isProfesor = require('../middleware/profesores');
@@ -16,33 +16,35 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// Obtener clases por día de la semana
 router.get('/:dayOfWeek', async (req, res) => {
   try {
     const { dayOfWeek } = req.params;
-    const classes = await ClassSchedule.find({ dayOfWeek });
+
+    const classes = await ClassSchedule.find({ dayOfWeek })
+      .populate('instructorId', 'name email'); 
+
     if (classes.length === 0) {
       return res.status(404).json({ message: 'No se encontraron horarios para ese día.' });
     }
+
     res.json(classes);
   } catch (err) {
+    console.error('Error al obtener los horarios:', err);
     res.status(500).json({ message: 'Error al obtener los horarios' });
   }
 });
 
-// Registrar usuario en clase
+
 router.post('/registerClass', authenticateToken, async (req, res) => {
   try {
     const { classId, dayOfWeek } = req.body;
-    const userId = req.user.id; // Obtener el ID del usuario autenticado
+    const userId = req.user.id; 
 
-    // Encontrar la clase por su id
     const classInfo = await ClassSchedule.findById(classId);
     if (!classInfo) {
       return res.status(404).json({ error: 'Clase no encontrada' });
     }
 
-    // Encontrar la información del usuario
     const userInfo = await User.findById(userId);
     if (!userInfo) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -51,14 +53,12 @@ router.post('/registerClass', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Debes tener un plan activo para inscribirte en esta clase' }); 
     }
 
-    // Calcular la fecha más cercana para el día de la semana especificado
     const today = new Date();
     const dayNumber = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].indexOf(dayOfWeek);
     const daysToAdd = (dayNumber + 7 - today.getDay()) % 7 || 7;
     const closestDate = new Date(today.setDate(today.getDate() + daysToAdd));
 
-    // Verificar si ya existe una inscripción para el mismo usuario, clase y fecha
-   // Verificar si ya existe una inscripción para el mismo usuario, clase y fecha
+
     const existingRegistration = await Attendance.findOne({
       userId,
       classId,
@@ -74,15 +74,14 @@ router.post('/registerClass', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Ya estás inscrito en esta clase para la fecha seleccionada' });
     }
 
-    // Crear una nueva inscripción
     const attendance = new Attendance({
       classId,
       userId,
       dayOfWeek: classInfo.dayOfWeek,
-      instructorName: classInfo.instructor,
+      instructorId: classInfo.instructorId,
       date: closestDate,
       userName: userInfo.name,
-      userEmail: userInfo.email
+      userEmail: userInfo.email,
     });
 
     await attendance.save();
@@ -97,63 +96,59 @@ router.post('/registerClass', authenticateToken, async (req, res) => {
 
 router.post('/registerStudent', authenticateToken, async (req, res) => {
   try {
-    const { classId, studentId, dayOfWeek } = req.body;
-    const professorId = req.user.id; // ID del profesor autenticado
+    const { classId, dayOfWeek, studentId } = req.body;
 
-    // Verificar que el que hace la petición es profesor
-    const professorInfo = await User.findById(professorId);
-    if (!professorInfo || professorInfo.role !== 'profe') {
-      return res.status(403).json({ error: 'No tienes permisos para inscribir alumnos' });
+    if (req.user.role !== 'admin' && req.user.role !== 'profe') {
+      return res.status(403).json({ error: 'No autorizado' });
     }
 
-    // Buscar la clase
     const classInfo = await ClassSchedule.findById(classId);
     if (!classInfo) {
+      console.log("❌ Clase no encontrada con ID:", classId);
       return res.status(404).json({ error: 'Clase no encontrada' });
     }
 
-    // Buscar el alumno
-    const studentInfo = await User.findById(studentId);
-    if (!studentInfo) {
-      return res.status(404).json({ error: 'Alumno no encontrado' });
+    const student = await User.findById(studentId);
+    if (!student) {
+      console.log("❌ Estudiante no encontrado con ID:", studentId);
+      return res.status(404).json({ error: 'Estudiante no encontrado' });
     }
-    // if (!studentInfo.plan || studentInfo.planDuration <= 0) {
-    //   return res.status(400).json({ error: 'El alumno no tiene un plan activo' });
-    // }
 
-    // Calcular fecha más cercana
+    if (!student.plan || student.planDuration <= 0) {
+      return res.status(400).json({ error: 'El estudiante no tiene un plan activo' });
+    }
+
     const today = new Date();
-    const dayNumber = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].indexOf(dayOfWeek);
+    const dayNumber = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].indexOf(dayOfWeek);
     const daysToAdd = (dayNumber + 7 - today.getDay()) % 7 || 7;
     const closestDate = new Date(today.setDate(today.getDate() + daysToAdd));
 
-    // Verificar inscripción previa
+    // Verificar si ya está inscrito
     const existingRegistration = await Attendance.findOne({
       userId: studentId,
       classId,
-      date: closestDate
+      date: closestDate,
     });
-
     if (existingRegistration) {
-      return res.status(400).json({ error: 'El alumno ya está inscrito en esta clase para la fecha seleccionada' });
+      return res.status(400).json({ error: 'El estudiante ya está inscrito en esta clase para esa fecha' });
     }
 
-    // Crear inscripción
-    const attendance = new Attendance({
+    // Crear la inscripción
+     const attendance = new Attendance({
       classId,
-      userId: studentId,
+      userId:studentId,
       dayOfWeek: classInfo.dayOfWeek,
-      instructorName: classInfo.instructor,
+      instructorId: classInfo.instructorId,
       date: closestDate,
-      userName: studentInfo.name,
-      userEmail: studentInfo.email
+      userName: student.name,
+      userEmail: student.email
     });
 
     await attendance.save();
 
-    res.json({ message: 'Alumno inscrito con éxito', student: studentInfo.name, date: closestDate });
+    res.json({ message: 'Estudiante inscrito con éxito', classInfo, date: closestDate });
   } catch (error) {
-    console.error('Error al registrar alumno en la clase:', error);
+    console.error('Error al registrar estudiante en clase:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
@@ -161,7 +156,6 @@ router.post('/registerStudent', authenticateToken, async (req, res) => {
 
 router.get('/all-registrations', async (req, res) => {
   try {
-    // Obtener todas las inscripciones
     const registrations = await Attendance.find().populate('userId', 'name email'); // Popular con datos de usuario si es necesario
 
     if (registrations.length === 0) {
@@ -203,6 +197,57 @@ router.put('/confirm-attendance/:attendanceId', authenticateToken, isProfesor, a
     res.status(500).json({ error: 'Error del servidor al confirmar asistencia' });
   }
 });
+
+router.get("/class-schedules", async (req, res) => {
+  try {
+    const schedules = await ClassSchedule.find()
+      // .populate("instructorId", "name email");
+    res.json(schedules);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener horarios" });
+  }
+});
+router.post("/assign-class", async (req, res) => {
+  try {
+    const { classId, teacherId } = req.body;
+
+    if (!classId || !teacherId) {
+      return res.status(400).json({ error: "Faltan parámetros" });
+    }
+
+    const updated = await ClassSchedule.findByIdAndUpdate(
+      classId,
+      { instructorId: teacherId },
+      { new: true }
+    ).populate("instructorId", "name email");
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error asignando clase:", error);
+    res.status(500).json({ error: "Error al asignar clase" });
+  }
+});
+router.post("/unassign-class", async (req, res) => {
+  try {
+    const { classId } = req.body;
+
+    if (!classId) {
+      return res.status(400).json({ error: "Falta classId" });
+    }
+
+    const updated = await ClassSchedule.findByIdAndUpdate(
+      classId,
+      { $unset: { instructorId: "" } }, // elimina el campo
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error desasignando clase:", error);
+    res.status(500).json({ error: "Error al desasignar clase" });
+  }
+});
+
 
 
 module.exports = router;

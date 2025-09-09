@@ -3,12 +3,11 @@ const router = express.Router();
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { authenticateToken, isAdmin } = require('../middleware/admin');
+const { authenticateToken, isAdmin, isAdminOrProfesor, isProfesor } = require('../middleware/admin');
 const Notification = require('../models/notification');
 const { createNotification } = require('../controller/notificationcontroller');
 const { now } = require('mongoose');
 const Attendance = require('../models/attendance')
-const isProfesor = require('../middleware/profesores');
 const nodemailer = require('nodemailer');
 
 require('dotenv').config();
@@ -117,7 +116,7 @@ router.get('/search', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, isAdmin, async (req, res) => {
+router.put('/:id', authenticateToken, isAdminOrProfesor,  async (req, res) => {
   try {
     const { plan, planDuration } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -236,7 +235,7 @@ router.post('/recover-password', async (req, res) => {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
       // Crear el enlace de recuperación
-      const resetLink = `http://192.168.128.15:3001/reset-password?token=${token}`;
+      const resetLink = `https://shyamashrambackend-production.up.railway.app/api/users/reset-password?token=${token}`;
 
       // Enviar el correo electrónico
       await sendPasswordResetEmail(email, resetLink);
@@ -249,19 +248,100 @@ router.post('/recover-password', async (req, res) => {
 });
 
 router.get('/reset-password', (req, res) => {
-  const token = req.query.token;
+  const { token } = req.query;
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Restablecer contraseña</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+        }
+        .card {
+          background: #fff;
+          padding: 2rem;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          width: 100%;
+          max-width: 400px;
+          text-align: center;
+        }
+        h2 {
+          margin-bottom: 1rem;
+          color: #333;
+        }
+        input[type="password"] {
+          width: 100%;
+          padding: 12px;
+          margin: 10px 0;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          font-size: 16px;
+        }
+        button {
+          width: 100%;
+          padding: 12px;
+          border: none;
+          border-radius: 8px;
+          background: #667eea;
+          color: white;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background 0.3s;
+        }
+        button:hover {
+          background: #5563c1;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h2>🔒 Restablecer contraseña</h2>
+        <form method="POST" action="/api/users/reset-password">
+          <input type="hidden" name="token" value="${token}" />
+          <input type="password" name="newPassword" placeholder="Nueva contraseña" required />
+          <button type="submit">Cambiar contraseña</button>
+        </form>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
 
   try {
     // Verificar el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    // Renderizar la página de restablecimiento de contraseña
-    res.render('reset-password', { token });
+    // Buscar usuario
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).send('Usuario no encontrado');
+
+    // Hashear la nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save(); // se guarda ya con el hash
+
+    res.send('Contraseña actualizada correctamente. Ahora puedes iniciar sesión.');
   } catch (error) {
-    console.error('Error al verificar el token:', error);
-    res.status(400).json({ error: 'Token inválido o expirado' });
+    console.error('Error al restablecer contraseña:', error);
+    res.status(400).send('Token inválido o expirado');
   }
 });
+
 
 module.exports = router;
 
