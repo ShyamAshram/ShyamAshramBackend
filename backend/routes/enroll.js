@@ -54,24 +54,26 @@ router.post('/api/teach/save-weekly-attendance', async (req, res) => {
     res.status(500).json({ message: 'Error al guardar la asistencia semanal' });
   }
 });
-router.delete('/clear-attendance/:day', async (req, res) => {
-  const { dayOfWeek } = req.params; // Día a limpiar, por ejemplo "Lunes"
+router.delete('/clear-attendance/:dayOfWeek', async (req, res) => {
+  const { dayOfWeek } = req.params;
+  
   
   try {
-    // Elimina los registros de asistencia para el día especificado
-    const result = await WeeklyAttendance.deleteMany({ dayOfWeek });
+    const existingRecords = await Attendance.find({});
+
+    
+    const result = await Attendance.deleteMany({ dayOfWeek });
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({ message: `No se encontraron inscripciones para ${day}.` });
+      return res.status(404).json({ message: `No se encontraron inscripciones para ${dayOfWeek}.` });
     }
 
-    res.status(200).json({ message: `Se eliminaron ${result.deletedCount} inscripciones para ${day}.` });
+    res.status(200).json({ message: `Se eliminaron ${result.deletedCount} inscripciones para ${dayOfWeek}.` });
   } catch (error) {
-    console.error('Error al limpiar las inscripciones:', error);
+    console.error('❌ Error al limpiar las inscripciones:', error);
     res.status(500).json({ message: 'Error al limpiar las inscripciones', details: error.message });
   }
 });
-
   
 
   module.exports = router;

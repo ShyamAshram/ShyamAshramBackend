@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user', enum: ['user', 'admin', 'profe'] },
   plan: { type: String, default: 'No tienes un plan', enum:['Ilimitado', '4 clases', '6 meses', '3 meses', '1 clase', 'Anualidad', 'No tienes un plan'] },
   planDuration: { type: Number, default: 0 },
+  planTotalDuration:{type:Number, default:0},
   planStartDate: { type: Date, default: Date.now },
   attendance: { type: [attendanceSchema], default: [] },
   phonenumber: {type:String, required:true},

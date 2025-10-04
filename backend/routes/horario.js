@@ -38,7 +38,7 @@ router.get('/:dayOfWeek', async (req, res) => {
 router.post('/registerClass', authenticateToken, async (req, res) => {
   try {
     const { classId, dayOfWeek } = req.body;
-    const userId = req.user.id; 
+    const userId = req.user.id;
 
     const classInfo = await ClassSchedule.findById(classId);
     if (!classInfo) {
@@ -49,15 +49,17 @@ router.post('/registerClass', authenticateToken, async (req, res) => {
     if (!userInfo) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    if (!userInfo.plan || userInfo.planDuration <= 0) { 
-      return res.status(400).json({ error: 'Debes tener un plan activo para inscribirte en esta clase' }); 
+
+    if (!userInfo.plan || userInfo.planDuration <= 0) {
+      return res.status(400).json({ error: 'Debes tener un plan activo para inscribirte en esta clase' });
     }
 
     const today = new Date();
     const dayNumber = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].indexOf(dayOfWeek);
     const daysToAdd = (dayNumber + 7 - today.getDay()) % 7 || 7;
-    const closestDate = new Date(today.setDate(today.getDate() + daysToAdd));
-
+    const closestDate = new Date(today);
+    closestDate.setDate(today.getDate() + daysToAdd);
+    closestDate.setHours(0, 0, 0, 0);
 
     const existingRegistration = await Attendance.findOne({
       userId,
@@ -69,30 +71,26 @@ router.post('/registerClass', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Ya estás inscrito en esta clase para la fecha seleccionada' });
     }
 
-
-    if (existingRegistration) {
-      return res.status(400).json({ error: 'Ya estás inscrito en esta clase para la fecha seleccionada' });
-    }
-
     const attendance = new Attendance({
       classId,
       userId,
       dayOfWeek: classInfo.dayOfWeek,
-      instructorId: classInfo.instructorId,
       date: closestDate,
+      instructorId: classInfo.instructorId,
       userName: userInfo.name,
       userEmail: userInfo.email,
     });
 
     await attendance.save();
 
-    // Notificar al usuario
+    // Respuesta
     res.json({ message: 'Inscripción exitosa', classInfo, date: closestDate });
   } catch (error) {
     console.error('Error al registrar en la clase:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
 
 router.post('/registerStudent', authenticateToken, async (req, res) => {
   try {

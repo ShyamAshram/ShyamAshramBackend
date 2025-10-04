@@ -1,7 +1,6 @@
 const cron = require('node-cron');
 const User = require('./../models/user'); 
 const sendEmail = require('./../utils/sendEmail');
-//const sendWhatsApp = require('./../utils/sendWhatsApp'); 
 const sendPushNotification = require('./../utils/sendPushNotification'); 
 
 
@@ -19,4 +18,28 @@ cron.schedule('0 9 * * *', async () => {
     await sendWhatsApp(user.phonenumber, message);
     await sendPushNotification(user._id, message);
   });
+});
+
+cron.schedule('0 0 * * *', async () => {  
+  console.log('Actualizando duración de planes de usuarios...');
+
+  const users = await User.find({ planDuration: { $gt: 0 } });
+
+  for (let user of users) {
+    if (['4 clases', '1 clase'].includes(user.plan)) {
+      const startDate = new Date(user.planStartDate);
+      const endOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+
+      if (new Date() > endOfMonth) {
+        user.planDuration = 0; 
+        await user.save();
+      }
+    } else {
+      user.planDuration -= 1;
+      if (user.planDuration < 0) user.planDuration = 0;
+      await user.save();
+    }
+  }
+
+  console.log('Duración de planes actualizada correctamente.');
 });

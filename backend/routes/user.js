@@ -121,7 +121,7 @@ router.put('/:id', authenticateToken, isAdminOrProfesor,  async (req, res) => {
     const { plan, planDuration } = req.body;
     const user = await User.findByIdAndUpdate(
       req.params.id, 
-      { plan, planDuration, planStartDate: new Date() }, 
+      { plan, planDuration, planStartDate: new Date() , planTotalDuration:planDuration}, 
       { new: true }
     );
 
@@ -203,7 +203,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Función para enviar correo electrónico
 const sendPasswordResetEmail = async (email, resetLink) => {
   const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -215,26 +214,21 @@ const sendPasswordResetEmail = async (email, resetLink) => {
   await transporter.sendMail(mailOptions);
 };
 
-// Ruta para recuperar contraseña
 router.post('/recover-password', async (req, res) => {
   const { email } = req.body;
 
   try {
-      // Buscar al usuario por su correo electrónico
       const user = await User.findOne({ email });
       if (!user) {
           return res.status(404).json({ error: 'El correo no está registrado' });
       }
 
-      // Verificar que JWT_SECRET esté definido
       if (!process.env.JWT_SECRET_KEY) {
           throw new Error('JWT_SECRET no está definido en las variables de entorno');
       }
 
-      // Generar un token JWT
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
-      // Crear el enlace de recuperación
       const resetLink = `https://shyamashrambackend-production.up.railway.app/api/users/reset-password?token=${token}`;
 
       // Enviar el correo electrónico
