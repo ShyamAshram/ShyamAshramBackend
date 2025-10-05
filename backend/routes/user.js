@@ -67,6 +67,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       progress: user.progress,
       planStartDate: user.planStartDate,
       planDuration: user.planDuration,
+      planTotalDuration: user.planTotalDuration,
       notifications
     });
   } catch (error) {
