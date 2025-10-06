@@ -16,8 +16,11 @@ const userSchema = new mongoose.Schema({
   planStartDate: { type: Date, default: Date.now },
   attendance: { type: [attendanceSchema], default: [] },
   phonenumber: {type:String, required:true},
-  birthDate: {type:Date, require:true}
-  
+  birthDate: {type:Date, require:true},
+  fcmToken: {
+    type: String,
+    default: null,
+  }
 });
 
 const User = mongoose.model('User', userSchema);
