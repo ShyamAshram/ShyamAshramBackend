@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const User = require('./../models/user'); 
 const sendEmail = require('./../utils/sendEmail');
 const sendPushNotification = require('./../utils/sendPushNotification'); 
+const { sendNotification } = require('../utils/sendNotification');
 
 
 cron.schedule('0 9 * * *', async () => {  
@@ -14,9 +15,16 @@ cron.schedule('0 9 * * *', async () => {
   users.forEach(async (user) => {
     const message = `Hola ${user.name}, tu plan "${user.plan}" está por expirar. ¡Renueva ahora para no perder acceso!`;
 
-    await sendEmail(user.email, 'Recordatorio de vencimiento de plan', message);
-    await sendWhatsApp(user.phonenumber, message);
-    await sendPushNotification(user._id, message);
+    // await sendEmail(user.email, 'Recordatorio de vencimiento de plan', message);
+    // await sendWhatsApp(user.phonenumber, message);
+    // await sendPushNotification(user._id, message);
+
+      if (user.fcmToken) {
+        await sendNotification(user.fcmToken, {
+          title: "Tu plan está por expirar",
+          body: message,
+        });
+    }
   });
 });
 

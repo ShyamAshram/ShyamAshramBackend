@@ -51,6 +51,22 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post("/save-fcm-token", async (req, res) => {
+  try {
+    const { userId, fcmToken } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    user.fcmToken = fcmToken;
+    await user.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al guardar token" });
+  }
+});
+
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
