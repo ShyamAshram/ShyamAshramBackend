@@ -1,6 +1,11 @@
 const { google } = require("google-auth-library");
 const fetch = require("node-fetch");
-const serviceAccount = require("../shyamashram8-58089597e687.json");
+const serviceAccount = {
+  project_id: process.env.GOOGLE_PROJECT_ID,
+  client_email: process.env.GOOGLE_CLIENT_EMAIL,
+  private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"), // importante para restaurar saltos de línea
+};
+
 const SCOPES = ["https://www.googleapis.com/auth/firebase.messaging"];
 const PROJECT_ID = serviceAccount.project_id;
 
