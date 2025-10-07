@@ -1,9 +1,10 @@
 const { google } = require("google-auth-library");
 const fetch = require("node-fetch");
+require('dotenv').config();
 const serviceAccount = {
   project_id: process.env.GOOGLE_PROJECT_ID,
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
-  private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"), // importante para restaurar saltos de línea
+  private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
 };
 
 const SCOPES = ["https://www.googleapis.com/auth/firebase.messaging"];
