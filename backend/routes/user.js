@@ -9,6 +9,7 @@ const { createNotification } = require('../controller/notificationcontroller');
 const { now } = require('mongoose');
 const Attendance = require('../models/attendance')
 const nodemailer = require('nodemailer');
+const { sendNotification } = require('../utils/sendNotification');
 
 require('dotenv').config();
 if (!process.env.JWT_SECRET_KEY) {
@@ -147,6 +148,10 @@ router.put('/:id', authenticateToken, isAdminOrProfesor,  async (req, res) => {
     }
 
     await createNotification( user._id,'Plan Actualizado', `Tu nuevo plan es ${plan}`);
+    await sendNotification(user.fcmToken, {
+      title: "Plan Actualizado",
+      body: `Tu nuevo plan es ${plan}`,
+    });
 
     
     res.json(user);
