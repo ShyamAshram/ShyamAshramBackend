@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const List = require('../models/list');
-const jwt = require('jsonwebtoken'); // Necesario para manejar el token
-const User = require('../models/user'); // Para obtener los datos del instructor
+const jwt = require('jsonwebtoken');
+const User = require('../models/user'); 
 
 // Ruta para guardar lista de asistencia
 router.post('/save-attendance', async (req, res) => {
@@ -14,11 +14,10 @@ router.post('/save-attendance', async (req, res) => {
   }
 
   try {
-    // 📥 Ver datos entrantes
     console.log('📝 Lista recibida:', attendedStudents);
     console.log('👨‍🏫 Instructor ID:', instructorId);
 
-    // ✅ Formatear estudiantes para guardar en el modelo
+    // ✅ Formatear estudiantes para guardar
     const studentsFormatted = attendedStudents.map((student) => {
       if (!mongoose.Types.ObjectId.isValid(student._id)) {
         throw new Error(`ID inválido: ${student._id}`);
@@ -31,29 +30,49 @@ router.post('/save-attendance', async (req, res) => {
       };
     });
 
-    // 🧾 Crear nueva lista de asistencia
+    // 🧾 Crear y guardar nueva lista
     const newList = new List({
       students: studentsFormatted,
-      instructorId: instructorId // Solo si lo tienes definido en el modelo
+      instructorId: instructorId,
     });
 
-    // 💾 Guardar en la base de datos
     await newList.save();
 
-    // ✅ Respuesta exitosa
+    // 🧮 Actualizar duración de planes por clase
+    for (const student of attendedStudents) {
+      const user = await User.findById(student._id);
+      if (!user) continue;
+
+      if (['4 clases', '1 clase'].includes(user.plan)) {
+        user.planDuration -= 1;
+        if (user.planDuration < 0) user.planDuration = 0;
+
+        if (user.planDuration === 0) {
+          user.plan = 'No tienes un plan';
+        }
+
+        // Guardar cambios
+        await user.save();
+        console.log(`📉 Se restó una clase a ${user.name}. Clases restantes: ${user.planDuration}`);
+      }
+    }
+
     res.status(201).json({
-      message: 'Lista de asistencia guardada exitosamente.',
-      attendance: newList
+      message: 'Lista de asistencia guardada exitosamente y planes actualizados.',
+      attendance: newList,
     });
 
   } catch (error) {
     console.error('❌ Error al guardar la asistencia:', error);
     res.status(500).json({
       message: 'Hubo un problema al guardar la asistencia.',
-      error: error.message
+      error: error.message,
     });
   }
 });
+
+module.exports = router;
+
 
   router.get('/attendance-lists', async (req, res) => {
     try {

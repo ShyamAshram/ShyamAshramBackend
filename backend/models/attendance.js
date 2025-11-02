@@ -40,6 +40,10 @@ const attendanceSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  archived: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);

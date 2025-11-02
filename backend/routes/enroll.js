@@ -11,7 +11,8 @@ router.get('/all-registrations', authenticateToken, async (req, res) => {
 
     const registrations = await Attendance.find({ 
         attended: false, 
-        instructorId: instructorId 
+        instructorId: instructorId,
+        archived: { $ne: true },
       })
       .populate('userId', 'name email')
       .populate('classId', 'name dayOfWeek');
@@ -74,6 +75,21 @@ router.delete('/clear-attendance/:dayOfWeek', async (req, res) => {
     res.status(500).json({ message: 'Error al limpiar las inscripciones', details: error.message });
   }
 });
+router.get('/archived', authenticateToken, async (req, res) => {
+  try {
+    const instructorId = req.user.id;
+    const archived = await Attendance.find({
+      instructorId,
+      archived: true,
+    })
+      .populate('userId', 'name email')
+      .populate('classId', 'name dayOfWeek');
+    res.json(archived);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener inscripciones archivadas.' });
+  }
+});
+
   
 
   module.exports = router;

@@ -51,3 +51,20 @@ cron.schedule('0 0 * * *', async () => {
 
   console.log('Duración de planes actualizada correctamente.');
 });
+
+cron.schedule('0 2 * * *', async () => {
+  console.log('Ejecutando cronjob de archivado de inscripciones pasadas...');
+
+  try {
+    const today = new Date();
+
+    const result = await Attendance.updateMany(
+      { date: { $lt: today }, archived: false },
+      { $set: { archived: true } }
+    );
+
+    console.log(`📦 ${result.modifiedCount} inscripciones archivadas correctamente.`);
+  } catch (error) {
+    console.error('❌ Error al archivar inscripciones pasadas:', error);
+  }
+});
