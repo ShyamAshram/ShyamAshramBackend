@@ -19,6 +19,7 @@ cron.schedule('0 9 * * *', async () => {
     // await sendEmail(user.email, 'Recordatorio de vencimiento de plan', message);
     // await sendWhatsApp(user.phonenumber, message);
     // await sendPushNotification(user._id, message);
+    // nuevo 
 
       if (user.fcmToken) {
         await sendNotification(user.fcmToken, {
