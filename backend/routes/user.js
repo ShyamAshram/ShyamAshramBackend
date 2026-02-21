@@ -20,12 +20,21 @@ const token = jwt.sign({ id: User._id }, process.env.JWT_SECRET_KEY, { expiresIn
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phonenumber, birthDate } = req.body;
+    console.log("BODY:", req.body);
+
+    const { name, email, password, phonenumber, birthDate, role } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
+    const existingUser = await  User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).send({ error: 'El correo ya está registrado' });
+    }
+
     const user = new User({ name, email, password: hashedPassword, phonenumber, birthDate });
     await user.save();
     res.status(201).send(user);
+
   } catch (error) {
+    console.error("REGISTER ERROR:", error);
     res.status(400).send({ error: 'Error al registrar usuario' });
   }
 });
