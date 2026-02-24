@@ -13,7 +13,7 @@ const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-
+console.log("API KEY:", process.env.RESEND_API_KEY);
 require('dotenv').config();
 if (!process.env.JWT_SECRET_KEY) {
   throw new Error('JWT_SECRET_KEY no está definido en las variables de entorno');
