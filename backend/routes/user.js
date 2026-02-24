@@ -231,7 +231,7 @@ router.get('/date/', authenticateToken, async (req, res) => {
 });
 
 const sendPasswordResetEmail = async (email, resetLink) => {
-  await resend.emails.send({
+  const response =await resend.emails.send({
     from: "onboarding@resend.dev",
     to: email,
     subject: "Recuperación de Contraseña",
@@ -254,6 +254,8 @@ const sendPasswordResetEmail = async (email, resetLink) => {
       </div>
     `,
   });
+
+  console.log('Respuesta de Resend:', response);
 };
 
 router.post('/recover-password', async (req, res) => {
