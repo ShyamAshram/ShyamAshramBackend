@@ -24,6 +24,7 @@
     "mongoose": "^8.8.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.10.0",
+    "resend": "^6.9.2",
     "twilio": "^5.4.3"
   },
   "devDependencies": {

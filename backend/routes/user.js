@@ -8,8 +8,11 @@ const Notification = require('../models/notification');
 const { createNotification } = require('../controller/notificationcontroller');
 const { now } = require('mongoose');
 const Attendance = require('../models/attendance')
-const nodemailer = require('nodemailer');
 const { sendNotification } = require('../utils/sendNotification');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 require('dotenv').config();
 if (!process.env.JWT_SECRET_KEY) {
@@ -226,23 +229,31 @@ router.get('/date/', authenticateToken, async (req, res) => {
   }
   
 });
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-  },
-});
 
 const sendPasswordResetEmail = async (email, resetLink) => {
-  const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Recuperación de Contraseña',
-      html: `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p><a href="${resetLink}">${resetLink}</a>`,
-  };
-
-  await transporter.sendMail(mailOptions);
+  await resend.emails.send({
+    from: "onboarding@resend.dev",
+    to: email,
+    subject: "Recuperación de Contraseña",
+    html: `
+      <div style="font-family: Arial, sans-serif; padding:20px;">
+        <h2>Recuperación de Contraseña</h2>
+        <p>Haz clic en el botón para restablecer tu contraseña:</p>
+        <a href="${resetLink}" 
+           style="display:inline-block;
+                  padding:12px 20px;
+                  background-color:#4CAF50;
+                  color:white;
+                  text-decoration:none;
+                  border-radius:6px;">
+           Restablecer Contraseña
+        </a>
+        <p style="margin-top:20px;font-size:12px;color:#777;">
+          Si no solicitaste este cambio, ignora este mensaje.
+        </p>
+      </div>
+    `,
+  });
 };
 
 router.post('/recover-password', async (req, res) => {
