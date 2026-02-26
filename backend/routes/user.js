@@ -232,7 +232,7 @@ router.get('/date/', authenticateToken, async (req, res) => {
 
 const sendPasswordResetEmail = async (email, resetLink) => {
   const response =await resend.emails.send({
-    from: "onboarding@resend.dev",
+    from: "Shyam Ashram <noreply@shyamashram.com>",
     to: email,
     subject: "Recuperación de Contraseña",
     html: `
