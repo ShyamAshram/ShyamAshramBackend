@@ -21,13 +21,10 @@ router.get('/:dayOfWeek', async (req, res) => {
     const { dayOfWeek } = req.params;
 
     const classes = await ClassSchedule.find({ dayOfWeek })
-      .populate('instructorId', 'name email'); 
+      .populate('instructorId', 'name email');
 
-    if (classes.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron horarios para ese día.' });
-    }
+    return res.status(200).json(classes); // 👈 siempre 200
 
-    res.json(classes);
   } catch (err) {
     console.error('Error al obtener los horarios:', err);
     res.status(500).json({ message: 'Error al obtener los horarios' });
