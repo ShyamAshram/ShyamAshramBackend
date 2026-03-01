@@ -17,11 +17,7 @@ router.get('/all-registrations', authenticateToken, async (req, res) => {
       .populate('userId', 'name email')
       .populate('classId', 'name dayOfWeek');
 
-    if (!registrations.length) {
-      return res.status(404).json({ message: 'No hay inscripciones registradas pendientes para este profesor.' });
-    }
-
-    res.json(registrations);
+      return res.status(200).json(registrations);
   } catch (err) {
     console.error('Error al obtener las inscripciones:', err);
     res.status(500).json({ error: 'Error del servidor al obtener inscripciones.' });
