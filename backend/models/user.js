@@ -11,6 +11,15 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: 'user', enum: ['user', 'admin', 'profe'] },
   plan: { type: String, default: 'No tienes un plan', enum:['Ilimitado', '4 clases', '6 meses', '3 meses', '1 clase', 'Anualidad', 'No tienes un plan'] },
+  stripePaymentIntent: {
+    type: String,
+    default: null
+  },
+  subscriptionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subscription',
+    default: null
+  },
   planDuration: { type: Number, default: 0 },
   planTotalDuration:{type:Number, default:0},
   planStartDate: { type: Date, default: Date.now },

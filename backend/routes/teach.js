@@ -27,6 +27,7 @@ router.post('/save-attendance', async (req, res) => {
         userId: new mongoose.Types.ObjectId(student._id),
         userName: student.userName,
         userEmail: student.userEmail,
+        attended: student.attended
       };
     });
 
@@ -73,24 +74,36 @@ router.post('/save-attendance', async (req, res) => {
 
 module.exports = router;
 
+router.get('/attendance-lists', async (req, res) => {
+  try {
+    const lists = await List.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          lists: { $push: "$$ROOT" }
+        }
+      },
+      { $sort: { _id: -1 } }
+    ]);
+    
+    for (const section of lists) {
+      for (const list of section.lists) {
+    console.log(list)
 
-  router.get('/attendance-lists', async (req, res) => {
-    try {
-        const lists = await List.aggregate([
-            {
-              $group: {
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-                lists: { $push: "$$ROOT" }
-              }
-            },
-            { $sort: { _id: -1 } }
-          ]);
 
-        res.status(200).json(lists);
-    } catch (error) {
-        console.error('Error al obtener las listas de asistencia:', error);
-        res.status(500).json({ message: 'Hubo un problema al obtener las listas de asistencia.' });
+        const instructor = await User.findOne({ id: list._id })
+          .select('name email');
+
+        list.instructor = instructor || null;
+      }
     }
+
+    res.status(200).json(lists);
+
+  } catch (error) {
+    console.error('Error al obtener listas:', error);
+    res.status(500).json({ message: 'Error al obtener listas' });
+  }
 });
   
   

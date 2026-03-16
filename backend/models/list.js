@@ -6,6 +6,7 @@ const ListSchema = new mongoose.Schema({
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
       userName: { type: String, required: true },
       userEmail: { type: String, required: true },
+      attended:{type:Boolean, required:true}
     },
   ],
   instructorId: { type: String },

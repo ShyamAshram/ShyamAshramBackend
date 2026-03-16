@@ -10,6 +10,10 @@ const notisRoutes = require('./routes/notification');
 const attendanceRoutes = require('./routes/attendance');
 const listRoutes = require('./routes/teach');
 const teacherRoutes = require('./routes/enroll');
+const subscription = require('./routes/subscription')
+const plan = require('./routes/plan')
+
+
 
 const adminMiddleware = require('./middleware/admin');
 const profeMiddleware = require('./middleware/profesores');
@@ -17,23 +21,24 @@ const profeMiddleware = require('./middleware/profesores');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Configuración de vistas
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
-// Middleware
 app.use(cors());
+app.use(
+  '/api/subscriptions/stripe-webhook',
+  express.raw({ type: 'application/json' })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Conectar a MongoDB
 (async () => {
   try {
     await connectDB();
     console.log('MongoDB Connected');
   } catch (error) {
     console.error('MongoDB Connection Error:', error);
-    process.exit(1); // Salir si falla la conexión
+    process.exit(1); 
   }
 })();
 
@@ -44,6 +49,9 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/classes', horarioRoutes);
 app.use('/api/list', listRoutes);
 app.use('/api/teach', teacherRoutes);
+app.use('/api/subscriptions', subscription)
+app.use('/api/plans', plan)
+
 
 // Rutas protegidas
 app.use('/api/admin', adminMiddleware.isAdmin, userRoutes);

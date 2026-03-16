@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
+const Subscription = require('../models/subscription');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { authenticateToken, isAdmin, isAdminOrProfesor, isProfesor } = require('../middleware/admin');
@@ -13,7 +14,6 @@ const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-console.log("API KEY:", process.env.RESEND_API_KEY);
 require('dotenv').config();
 if (!process.env.JWT_SECRET_KEY) {
   throw new Error('JWT_SECRET_KEY no está definido en las variables de entorno');
@@ -377,6 +377,40 @@ router.post('/reset-password', async (req, res) => {
   } catch (error) {
     console.error('Error al restablecer contraseña:', error);
     res.status(400).send('Token inválido o expirado');
+  }
+});
+
+
+
+router.put('/:id/change-role', async (req, res) => {
+  try {
+
+    const { role, userId } = req.body;
+
+    if (!role || !userId) {
+      return res.status(400).json({ error: "role y userId son requeridos" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    return res.status(200).json({
+      message: "Rol actualizado correctamente",
+      user
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Error al actualizar el rol"
+    });
   }
 });
 
