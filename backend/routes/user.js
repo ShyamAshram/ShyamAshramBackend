@@ -105,9 +105,9 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/users', authenticateToken, isAdmin, async (req, res) => {
+router.get('/users', authenticateToken, isAdminOrProfesor,  async (req, res) => {
   try {
-    const users = await User.find({ role: { $ne: 'admin' } }, 'name email plan planDuration role phonenumber');
+    const users = await User.find({ role: { $ne: 'admin',  } }, 'name email plan planDuration role phonenumber');
     res.json(users);
   } catch (error) {
     console.error('Error al obtener los usuarios:', error);
