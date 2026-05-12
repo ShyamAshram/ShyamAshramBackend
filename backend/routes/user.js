@@ -107,7 +107,7 @@ router.get('/me', authenticateToken, async (req, res) => {
 
 router.get('/users', authenticateToken, isAdminOrProfesor,  async (req, res) => {
   try {
-    const users = await User.find({ role: { $ne: 'admin',  } }, 'name email plan planDuration role phonenumber');
+    const users = await User.find({ role: { $ne: 'admin',  } }, 'name email plan planDuration role phonenumber planStartDate planTotalDuration');
     res.json(users);
   } catch (error) {
     console.error('Error al obtener los usuarios:', error);
@@ -148,10 +148,53 @@ router.get('/search', authenticateToken, isAdmin, async (req, res) => {
 
 router.put('/:id', authenticateToken, isAdminOrProfesor,  async (req, res) => {
   try {
-    const { plan, planDuration } = req.body;
+    const { plan, planDuration, planStartDate } = req.body;
+
+    console.log('Datos recibidos para actualización:', { plan, planDuration, planStartDate });
+
+    const updateData = {};
+    
+    if (plan !==undefined) {
+      updateData.plan = plan;
+    }
+    if (planDuration !== undefined) {
+      updateData.planDuration = planDuration;
+      updateData.planTotalDuration = planDuration;
+    }
+    if (planStartDate !== undefined) {
+    const existingUser = await User.findById(req.params.id);
+
+    if (!existingUser) {
+      return res.status(404).json({
+        error: 'Usuario no encontrado'
+      });
+    }
+
+    const today = new Date();
+    const startDate = new Date(planStartDate);
+
+    const diffTime = today - startDate;
+
+    const daysPassed = Math.floor(
+      diffTime / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysPassed <= 0) {
+      updateData.planDuration =
+        existingUser.planTotalDuration;
+    } else {
+      updateData.planDuration = Math.max(
+        existingUser.planTotalDuration - daysPassed,
+        0
+      );
+    }
+
+    updateData.planStartDate = planStartDate;
+  }
+
     const user = await User.findByIdAndUpdate(
       req.params.id, 
-      { plan, planDuration, planStartDate: new Date() , planTotalDuration:planDuration}, 
+      updateData, 
       { new: true }
     );
 
@@ -159,11 +202,13 @@ router.put('/:id', authenticateToken, isAdminOrProfesor,  async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    await createNotification( user._id,'Plan Actualizado', `Tu nuevo plan es ${plan}`);
-    await sendNotification(user.fcmToken, {
-      title: "Plan Actualizado",
-      body: `Tu nuevo plan es ${plan}`,
-    });
+    if (plan !== undefined) {
+      await createNotification( user._id,'Plan Actualizado', `Tu nuevo plan es ${plan}`);
+      await sendNotification(user.fcmToken, {
+        title: "Plan Actualizado",
+        body: `Tu nuevo plan es ${plan}`,
+      });
+    }
 
     
     res.json(user);

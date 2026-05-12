@@ -30,25 +30,53 @@ cron.schedule('0 9 * * *', async () => {
   });
 });
 
-cron.schedule('0 0 * * *', async () => {  
+cron.schedule('0 0 * * *', async () => {
   console.log('Actualizando duración de planes de usuarios...');
 
-  const users = await User.find({ planDuration: { $gt: 0 } });
+  const today = new Date();
+
+  const users = await User.find({
+    planTotalDuration: { $gt: 0 }
+  });
 
   for (let user of users) {
-    if (['4 clases', '1 clase'].includes(user.plan)) {
-      const startDate = new Date(user.planStartDate);
-      const endOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+    if (!user.planStartDate) continue;
 
-      if (new Date() > endOfMonth) {
-        user.planDuration = 0; 
-        await user.save();
+    const startDate = new Date(user.planStartDate);
+
+    if (['4 clases', '1 clase'].includes(user.plan)) {
+      const endOfMonth = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth() + 1,
+        0
+      );
+
+      if (today > endOfMonth) {
+        user.planDuration = 0;
+      } else {
+        user.planDuration = user.planTotalDuration;
       }
-    } else {
-      user.planDuration -= 1;
-      if (user.planDuration < 0) user.planDuration = 0;
+
       await user.save();
+      continue;
     }
+
+    const diffTime = today - startDate;
+
+    const daysPassed = Math.floor(
+      diffTime / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysPassed <= 0) {
+      user.planDuration = user.planTotalDuration;
+    } else {
+      user.planDuration = Math.max(
+        user.planTotalDuration - daysPassed,
+        0
+      );
+    }
+
+    await user.save();
   }
 
   console.log('Duración de planes actualizada correctamente.');

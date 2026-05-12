@@ -19,7 +19,7 @@ const adminMiddleware = require('./middleware/admin');
 const profeMiddleware = require('./middleware/profesores');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3001;
 
 app.set('view engine', 'ejs');
 app.set('views', './views');
